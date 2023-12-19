@@ -1,0 +1,8 @@
+/target
+*.txt
+*.tsp
+*.zip
+*.csv
+.idea*
+*.iml
+*.ini

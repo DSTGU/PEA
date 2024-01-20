@@ -3,13 +3,7 @@ use priority_queue::PriorityQueue;
 use rand::{random, Rng, thread_rng};
 use rand::rngs::ThreadRng;
 use rand::seq::SliceRandom;
-
-pub fn swap(graph: &Vec<Vec<i32>>, path: &Vec<usize>,j:usize ,k:usize) -> (i32, Vec<usize>){
-    let mut afterpath = path.clone();
-    afterpath.swap(j,k);
-
-    (calculate_cost(graph,&afterpath),afterpath)
-}
+use crate::tabu::cadlen;
 
 pub fn invert(graph: &Vec<Vec<i32>>, path: &Vec<usize>,j:usize ,k:usize) -> (i32, Vec<usize>){
     let mut afterpath = path.clone();
@@ -118,25 +112,34 @@ fn calculate_cost(graph: &Vec<Vec<i32>>, path: &Vec<usize>) -> i32
     cost
 }
 
-fn mutate(path: Vec<usize>, percentage: usize, rng: &ThreadRng) -> Vec<usize>{
+fn mutate(mut path: Vec<usize>, percentage: usize, rng: &mut ThreadRng) -> Vec<usize>{
+
+    let length = path.len();
+    if rng.gen_range(0..100) > percentage {
+        path.swap(rng.gen_range(0..length), rng.gen_range(0..length))
+    }
+
+    path
 
 
 }
 
 fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)>, maxpopulation: usize) -> Vec<(i32, Vec<usize>)>{
 
-    let mut subpopulation = vec![];
+    let mut subpopulation = population.clone();
+    subpopulation.truncate(25);
     let mut rng = rand::thread_rng();
     let populationlen = population.len();
 
     while subpopulation.len() < maxpopulation {
-        let index1 = min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen));
-        let index2 = min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen));
+        let index1 = min(min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)), min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)));
+        let index2 = min(min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)), min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)));
+
         let mut children = pmx(&population[index1].1, &population[index2].1);
-        let mut mutatedchildren0 = mutate(children.0, 5, &rng);
-        let mut mutatedchildren1 = mutate(children.1, 5, &rng);
-        subpopulation.push((calculate_cost(graph,&mutatedchildren0.0), mutatedchildren0.0));
-        subpopulation.push((calculate_cost(graph,&mutatedchildren1.1), mutatedchildren1.1));
+        let mut mutatedchildren0 = mutate(children.0, 2, &mut rng);
+        let mut mutatedchildren1 = mutate(children.1, 2, &mut rng);
+        subpopulation.push((calculate_cost(graph,&mutatedchildren0), mutatedchildren0));
+        subpopulation.push((calculate_cost(graph,&mutatedchildren1), mutatedchildren1));
     }
 
     subpopulation
@@ -164,7 +167,7 @@ pub fn genetic(graph: &Vec<Vec<i32>>, maxpopulation: usize) -> (i32, Vec<usize>)
 
         population.sort_by(|(a, _), (b, _)| a.cmp(b));
 
-        population.truncate(population.len()/2);
+        population.truncate(population.len()/4);
         //println!("{:?}",population[0]);
 
         if population[0].0 < best.0 {

@@ -17,6 +17,7 @@ use csv::Writer;
 use rand::Rng;
 use crate::genetic::pmx;
 use crate::heldkarp::held_karp;
+use crate::parser::generate_graph;
 use crate::tabu::localsearch;
 
 
@@ -52,7 +53,7 @@ fn initester(filepath: &str, count: i32, opt: i32, writer: &mut Writer<File>) {
 
     for i in 0..count {
         let now = Instant::now();
-        let (best, path) = tabu::tabusearch_v2(&graph);
+        let (best, path) = genetic::genetic(&graph, 1000);
 
         let time = now.elapsed().as_micros();
         println!("elapsed: {} us", time);
@@ -83,8 +84,8 @@ fn inifile(ini: String) -> (){
 
 fn genetictests() -> (){
 
-    let path1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    let path2 = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    let path1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
+    let path2 = vec![9, 8, 7, 6, 5, 4, 3, 2, 1];
 
     let (pchild1, pchild2) = pmx(&path1, &path2);
     let (ochild1, ochild2) = genetic::ox(&path1, &path2);
@@ -100,6 +101,7 @@ fn genetictests() -> (){
 fn main() {
 
     //genetictests();
+    //genetic::genetic(&generate_graph(20,100), 200);
     let iniResult = fs::read_to_string("config.ini");
     let ini = match iniResult {
         Ok(file) => file,

@@ -1,4 +1,27 @@
-use rand::Rng;
+use std::cmp::min;
+use priority_queue::PriorityQueue;
+use rand::{random, Rng, thread_rng};
+use rand::rngs::ThreadRng;
+use rand::seq::SliceRandom;
+
+pub fn swap(graph: &Vec<Vec<i32>>, path: &Vec<usize>,j:usize ,k:usize) -> (i32, Vec<usize>){
+    let mut afterpath = path.clone();
+    afterpath.swap(j,k);
+
+    (calculate_cost(graph,&afterpath),afterpath)
+}
+
+pub fn invert(graph: &Vec<Vec<i32>>, path: &Vec<usize>,j:usize ,k:usize) -> (i32, Vec<usize>){
+    let mut afterpath = path.clone();
+    let mut j = j;
+    let mut k = k;
+    while j < k{
+        afterpath.swap(j,k);
+        j += 1;
+        k -= 1;
+    }
+    (calculate_cost(graph,&afterpath),afterpath)
+}
 
 pub fn ox(path1: &Vec<usize>, path2: &Vec<usize>) -> (Vec<usize>, Vec<usize>) {
     let len = path1.len();
@@ -48,7 +71,9 @@ pub fn pmx(path1: &Vec<usize>, path2: &Vec<usize>) -> (Vec<usize>, Vec<usize>) {
     let mut child2 = path2[start..end].to_vec();
 
     // Map the values in the selected portion
-    let mut mapping = vec![0; len];
+    let mut mapping = vec![0; len+1];
+
+
     for i in 0..child1.len() {
         mapping[child1[i]] = child2[i];
         mapping[child2[i]] = child1[i];
@@ -73,3 +98,105 @@ pub fn pmx(path1: &Vec<usize>, path2: &Vec<usize>) -> (Vec<usize>, Vec<usize>) {
 
     (child1, child2)
 }
+
+
+fn randompath(graph: &Vec<Vec<i32>>, rng: &mut ThreadRng) -> (i32, Vec<usize>) {
+
+    let mut ver :Vec<usize> = (1..graph.len()).collect();
+    ver.shuffle(rng);
+
+    (calculate_cost(graph, &ver), ver)
+}
+
+fn calculate_cost(graph: &Vec<Vec<i32>>, path: &Vec<usize>) -> i32
+{
+    let mut cost = graph[0][path[0]];
+    for i in 0..path.len() - 1 {
+        cost += graph[path[i]][path[i + 1]];
+    }
+    cost += graph[path[path.len()-1]][0];
+    cost
+}
+
+fn mutate(path: Vec<usize>, percentage: usize, rng: &ThreadRng) -> Vec<usize>{
+
+
+}
+
+fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)>, maxpopulation: usize) -> Vec<(i32, Vec<usize>)>{
+
+    let mut subpopulation = vec![];
+    let mut rng = rand::thread_rng();
+    let populationlen = population.len();
+
+    while subpopulation.len() < maxpopulation {
+        let index1 = min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen));
+        let index2 = min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen));
+        let mut children = pmx(&population[index1].1, &population[index2].1);
+        let mut mutatedchildren0 = mutate(children.0, 5, &rng);
+        let mut mutatedchildren1 = mutate(children.1, 5, &rng);
+        subpopulation.push((calculate_cost(graph,&mutatedchildren0.0), mutatedchildren0.0));
+        subpopulation.push((calculate_cost(graph,&mutatedchildren1.1), mutatedchildren1.1));
+    }
+
+    subpopulation
+}
+
+
+
+pub fn genetic(graph: &Vec<Vec<i32>>, maxpopulation: usize) -> (i32, Vec<usize>)
+{
+    let mut population = vec![];
+
+    let mut rng = thread_rng();
+    let mut iteration = 0;
+
+    while population.len() < maxpopulation {
+        let randomsol = randompath(&graph, &mut rng);
+        population.push(randomsol);
+    }
+
+    let mut best = (i32::MAX, vec![]);
+
+    loop {
+
+
+
+        population.sort_by(|(a, _), (b, _)| a.cmp(b));
+
+        population.truncate(population.len()/2);
+        //println!("{:?}",population[0]);
+
+        if population[0].0 < best.0 {
+            best = population[0].clone();
+        }
+
+        population = create_subpopulation(graph, population, maxpopulation);
+
+
+        iteration = iteration + 1;
+        if iteration > 1000 {
+            break;
+        }
+    }
+
+
+    best
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

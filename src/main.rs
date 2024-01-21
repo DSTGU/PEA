@@ -7,6 +7,8 @@ mod genetic;
 
 use std::{env, fs, thread};
 use std::char::MAX;
+use std::cmp::min;
+use std::f64::consts;
 use std::fs::{File, OpenOptions};
 use std::io::stdin;
 use std::sync::{Arc, mpsc, Mutex};
@@ -15,6 +17,7 @@ use std::time::Instant;
 use itertools::Itertools;
 use csv::Writer;
 use rand::Rng;
+use rand::rngs::ThreadRng;
 use crate::genetic::pmx;
 use crate::heldkarp::held_karp;
 use crate::parser::generate_graph;
@@ -53,7 +56,7 @@ fn initester(filepath: &str, count: i32, opt: i32, writer: &mut Writer<File>) {
 
     for i in 0..count {
         let now = Instant::now();
-        let (best, path) = genetic::genetic(&graph, 1000);
+        let (best, path) = genetic::genetic(&graph, 100);
 
         let time = now.elapsed().as_micros();
         println!("elapsed: {} us", time);
@@ -98,10 +101,28 @@ fn genetictests() -> (){
 
 }
 
+fn numfunction_v1(max: usize, rng: &mut ThreadRng) -> usize{
+
+
+    min(min(rng.gen_range(0..max), rng.gen_range(0..max)), min(rng.gen_range(0..max), rng.gen_range(0..max)))
+}
+
+fn numfunction_v2(max:usize, rng:  &mut ThreadRng) -> usize{
+
+    rng.gen_range(0..max) * rng.gen_range(0..max) / max
+}
+
+fn generate_random_weighted(max: usize, rng: &mut ThreadRng) -> usize {
+
+    let a : f64 = rng.gen();
+
+    (a.powf(2.0)*(max as f64)) as usize
+}
+
 fn main() {
 
-    //genetictests();
-    //genetic::genetic(&generate_graph(20,100), 200);
+
+
     let iniResult = fs::read_to_string("config.ini");
     let ini = match iniResult {
         Ok(file) => file,

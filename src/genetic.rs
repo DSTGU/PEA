@@ -120,24 +120,52 @@ fn mutate(mut path: Vec<usize>, percentage: usize, rng: &mut ThreadRng) -> Vec<u
     }
 
     path
+}
 
+fn numfunction_v1(max: usize, rng: &mut ThreadRng) -> usize{
+
+
+    min(min(rng.gen_range(0..max), rng.gen_range(0..max)), min(rng.gen_range(0..max), rng.gen_range(0..max)))
 
 }
 
-fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)>, maxpopulation: usize) -> Vec<(i32, Vec<usize>)>{
+fn numfunction_v2(max:usize, rng:  &mut ThreadRng) -> usize{
+
+    rng.gen_range(0..max) * rng.gen_range(0..max) / max
+}
+
+fn generate_random_weighted(max: usize, rng: &mut ThreadRng) -> usize {
+    let exponent = 1.7;
+
+    // Generate a random float between 0 and 1
+    let rand_float: f64 = rng.gen();
+
+    // Apply a weighted distribution using an exponential function
+    let weighted_value = (rand_float.powf(exponent) * f64::from(max as u32)) as usize;
+
+    weighted_value
+}
+
+
+fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)>, maxpopulation: usize, crossover_probability : usize, mutation_probability: usize) -> Vec<(i32, Vec<usize>)>{
 
     let mut subpopulation = population.clone();
-    subpopulation.truncate(25);
+    //subpopulation.truncate(10);
     let mut rng = rand::thread_rng();
     let populationlen = population.len();
 
     while subpopulation.len() < maxpopulation {
-        let index1 = min(min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)), min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)));
-        let index2 = min(min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)), min(rng.gen_range(0..populationlen), rng.gen_range(0..populationlen)));
+        let index1 = generate_random_weighted(populationlen, &mut rng);
+        let index2 = generate_random_weighted(populationlen, &mut rng);
 
-        let mut children = pmx(&population[index1].1, &population[index2].1);
-        let mut mutatedchildren0 = mutate(children.0, 2, &mut rng);
-        let mut mutatedchildren1 = mutate(children.1, 2, &mut rng);
+        let mut children = (population[index1].1.clone(), population[index2].1.clone());
+
+        if rng.gen_range(0..100) < crossover_probability{
+            children = pmx(&population[index1].1, &population[index2].1);
+        }
+
+        let mut mutatedchildren0 = mutate(children.0, mutation_probability, &mut rng);
+        let mut mutatedchildren1 = mutate(children.1, mutation_probability, &mut rng);
         subpopulation.push((calculate_cost(graph,&mutatedchildren0), mutatedchildren0));
         subpopulation.push((calculate_cost(graph,&mutatedchildren1), mutatedchildren1));
     }
@@ -160,46 +188,26 @@ pub fn genetic(graph: &Vec<Vec<i32>>, maxpopulation: usize) -> (i32, Vec<usize>)
     }
 
     let mut best = (i32::MAX, vec![]);
+    let mut lastimprovement = 0;
 
     loop {
-
-
-
         population.sort_by(|(a, _), (b, _)| a.cmp(b));
 
-        population.truncate(population.len()/4);
-        //println!("{:?}",population[0]);
+        population.truncate(maxpopulation/2);
 
         if population[0].0 < best.0 {
             best = population[0].clone();
+            lastimprovement = iteration;
+            println!("New best: {}, iteration: {}", best.0, iteration);
         }
 
-        population = create_subpopulation(graph, population, maxpopulation);
+        population = create_subpopulation(graph, population, maxpopulation, 90, 10);
 
 
         iteration = iteration + 1;
-        if iteration > 1000 {
+        if iteration > lastimprovement + 1300 {
             break;
         }
     }
-
-
     best
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

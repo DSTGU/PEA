@@ -53,19 +53,25 @@ fn initester(filepath: &str, count: i32, opt: i32, writer: &mut Writer<File>) {
 
     let mut ovbest: i32 = 0;
     let mut ovtime:i32 = 0;
+    let mut realcount: i32 = 0;
+    let starttime = Instant::now();
+    for _ in 0..count {
+        if starttime.elapsed().as_secs() < 300 {
+            realcount += 1;
+            let now = Instant::now();
+            let (best, path) = genetic::genetic(&graph, 400);
+            let time = now.elapsed().as_micros();
+            println!("elapsed: {} us", time);
+            println!("best score: {}", best);
+            println!("Path: {:?}", path);
+            ovtime += time as i32;
+            ovbest += best;
 
-    for i in 0..count {
-        let now = Instant::now();
-        let (best, path) = genetic::genetic(&graph, 100);
-
-        let time = now.elapsed().as_micros();
-        println!("elapsed: {} us", time);
-        println!("best score: {}", best);
-        println!("Path: {:?}", path);
-        ovtime += time as i32;
-        ovbest += best;
+            if (realcount + 1) * (now.elapsed().as_secs() as i32) > 300 //proactively disable further action
+            { break; }
+        }
     }
-    writer.serialize((filepath, ovbest/count, ((ovbest as f32 /count as f32) /opt as f32) ,(ovtime/count) as f32 / 1000000.0)).expect("Failed to write results to CSV");
+    writer.serialize((filepath, ovbest/realcount, ((ovbest as f32 /realcount as f32) /opt as f32) ,(ovtime/realcount) as f32 / 1000000.0)).expect("Failed to write results to CSV");
 //path.into_iter().map(|x| x.to_string() + "-").collect::<String>()
 }
 

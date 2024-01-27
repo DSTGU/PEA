@@ -56,7 +56,7 @@ fn initester(filepath: &str, count: i32, opt: i32, writer: &mut Writer<File>) {
         if starttime.elapsed().as_secs() < 300 {
             realcount += 1;
             let now = Instant::now();
-            let (best, path) = annealing::annealing(&graph, 0.99);
+            let (best, path) = annealing::annealing(&graph, 0.997);
             let time = now.elapsed().as_micros();
             println!("elapsed: {} us", time);
             println!("best score: {}", best);
@@ -89,13 +89,10 @@ fn inifile(ini: String) -> (){
 }
 
 fn main() {
-
-
-
     let ini_result = fs::read_to_string("config.ini");
     let ini = match ini_result {
         Ok(file) => file,
-        Err(_) =>{
+        Err(_) => {
             auto_test(6, 1000, 100);
             auto_test(8, 1000, 100);
             auto_test(10, 1000, 100);
@@ -114,53 +111,4 @@ fn main() {
     };
     inifile(ini);
 
-/*
-let args: Vec<String> = env::args().collect();
-
-if args.len() <= 1 {
-    println!("File based usage: ./PEA.exe <filename1> <filename2> (...)");
-    println!("Generating graphs mode");
-    auto_test(4,1000,10000);
-}
-
-// Create a CSV file or append to an existing one
-let mut writer = Writer::from_path("results.csv").expect("Unable to create/open results.csv");
-
-for fpath in &args[1..]{
-    println!("{}", fpath.clone());
-    let file_content = fs::read_to_string(fpath).expect("Should read the file unless an error occurs");
-
-    let graph = parser::parse_graph_matrix(&*file_content);
-
-    /*let now = Instant::now();
-    let (best, path) = bruteforce::brute_force_mt(&graph);
-
-    let time = now.elapsed().as_micros();
-    println!("elapsed: {} us", time);
-    println!("best score: {}", best);
-    println!("Path: {:?}", path);
-
-    let now = Instant::now();
-    let (best, path) = bruteforce::brute_force(&graph);
-
-    let time = now.elapsed().as_micros();
-    println!("elapsed: {} us", time);
-    println!("best score: {}", best);
-    println!("Path: {:?}", path);
-    */
-    let now = Instant::now();
-    let (best, path) = heldkarp::held_karp(&graph);
-
-    let time = now.elapsed().as_micros();
-    println!("elapsed: {} us", time);
-    println!("best score: {}", best);
-    println!("Path: {:?}", path);
-
-    // Write the results to the CSV file
-    //writer.serialize((fpath, best, time, path.into_iter().map(|x| x.to_string() + "-").collect::<String>()))
-    //    .expect("Failed to write results to CSV");
-}
-
-
-*/
 }

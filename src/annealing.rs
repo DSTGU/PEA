@@ -46,6 +46,9 @@ fn probability(delta:f32, temperature: f32) -> f32 {
     f32::powf(std::f32::consts::E, -delta/temperature)
 }
 
+fn nextTLundy(temperature: f32, lambda: f32) -> f32 {
+    temperature/(1.0+0.0005*temperature)
+}
 
 pub fn annealing(graph: &Vec<Vec<i32>>, lambda: f32) -> (i32, Vec<usize>)
 {
@@ -55,8 +58,9 @@ pub fn annealing(graph: &Vec<Vec<i32>>, lambda: f32) -> (i32, Vec<usize>)
     let n = graph.len()-1;
     let mut temperature = starttemperature(graph, 10000);
 
-    while temperature > 1.005 {
-        for _ in 0..5000 {
+    loop {
+
+        for _ in 0..(2* n.pow(2)) {
 
             let swapsolution = swap(graph, &solution.1, rng.gen_range(0..n), rng.gen_range(0..n));
 
@@ -67,7 +71,15 @@ pub fn annealing(graph: &Vec<Vec<i32>>, lambda: f32) -> (i32, Vec<usize>)
 
 
         }
-        temperature = temperature * lambda;
+        //temperature = temperature * lambda;
+        temperature = nextTLundy(temperature, lambda);
+        if temperature < 1.005 {
+            println!("{}", temperature);
+            break;
+        }
+
+
+
     }
 
     solution

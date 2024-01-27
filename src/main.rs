@@ -56,7 +56,7 @@ fn initester(filepath: &str, count: i32, opt: i32, writer: &mut Writer<File>) {
         if starttime.elapsed().as_secs() < 300 {
             realcount += 1;
             let now = Instant::now();
-            let (best, path) = genetic::genetic(&graph, 400);
+            let (best, path) = annealing::annealing(&graph, 0.99);
             let time = now.elapsed().as_micros();
             println!("elapsed: {} us", time);
             println!("best score: {}", best);

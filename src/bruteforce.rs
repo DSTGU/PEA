@@ -38,7 +38,7 @@ fn calculate_cost_cutoff(graph: &Vec<Vec<i32>>, path: &Vec<&usize>, cutoff: i32)
     cost
 }
 
-fn calculate_cost_MT(graph: &Vec<Vec<i32>>, path: &Vec<&usize>, nr: usize) -> i32 {
+fn calculate_cost_mt(graph: &Vec<Vec<i32>>, path: &Vec<&usize>, nr: usize) -> i32 {
     let mut cost = graph[0][nr];
     cost += graph[nr][*path[0]];
     for i in 0..path.len() - 1 {
@@ -59,7 +59,7 @@ fn brute_force_thread(graph: Vec<Vec<i32>>, nr: usize) -> (i32, Vec<usize>) {
 
 
     for perm in current_path.iter().permutations(size-2) { //Generacja wszystkich permutacji za pomocą iteratora
-        let current_cost = calculate_cost_MT(&graph, &perm, nr); //Liczenie funkcji celu
+        let current_cost = calculate_cost_mt(&graph, &perm, nr); //Liczenie funkcji celu
 
         if current_cost < best_cost { //Jeśli obecna permutacja jest lepsza niż wszystkie poprzednie to ją zapisujemy
             best_cost = current_cost;
@@ -76,7 +76,7 @@ fn brute_force_thread(graph: Vec<Vec<i32>>, nr: usize) -> (i32, Vec<usize>) {
 
 }
 
-pub fn brute_force_MT(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
+pub fn brute_force_mt(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     // Define the number of threads and an empty vector to store results
     let num_threads = graph.len()-2; // Change this to the desired number of threads
     let mut results = Vec::with_capacity(num_threads);
@@ -104,7 +104,7 @@ pub fn brute_force_MT(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     let mut l = i32::MAX;
     let mut p = vec![];
 
-    for (i, v) in results.iter().enumerate() {
+    for (_, v) in results.iter().enumerate() {
         if v.0 < l
         {
             l = v.0;

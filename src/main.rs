@@ -1,9 +1,9 @@
 mod parser;
 mod bruteforce;
-mod tester;
 mod heldkarp;
 mod tabu;
 mod genetic;
+mod annealing;
 
 use std::{env, fs, thread};
 use std::char::MAX;
@@ -18,10 +18,7 @@ use itertools::Itertools;
 use csv::Writer;
 use rand::Rng;
 use rand::rngs::ThreadRng;
-use crate::genetic::pmx;
-use crate::heldkarp::held_karp;
 use crate::parser::generate_graph;
-use crate::tabu::localsearch;
 
 
 fn auto_test(n: i32, max: i32, count: i32) -> (){
@@ -29,7 +26,7 @@ fn auto_test(n: i32, max: i32, count: i32) -> (){
     let mut autowriter = Writer::from_path("autoresultsn".to_owned() + &n.to_string() + ".csv").expect("Unable to create/open results.csv");
 
     for _ in 0..count{
-        let graph = parser::generate_graph(n,max);
+        let graph = generate_graph(n,max);
 
         let now = Instant::now();
         let (best, path) = heldkarp::held_karp(&graph);
@@ -76,63 +73,29 @@ fn initester(filepath: &str, count: i32, opt: i32, writer: &mut Writer<File>) {
 }
 
 fn inifile(ini: String) -> (){
-    let csvpath = ini.split(" ").last().expect("Empty ini file");
+    let _ = ini.split(" ").last().expect("Empty ini file");
 
     let mut writer = Writer::from_path("results.csv").expect("Unable to create/open results.csv");
-    let mut iniiter = ini.split("\n");
+    let iniiter = ini.split("\n");
 
     for term in iniiter {
         if term.clone().split(" ").count() <= 1 {continue;}
-        let mut filepath = term.split(" ").nth(0).expect("");
-        let mut count = term.split(" ").nth(1).expect("").parse().expect("");
-        let mut opt = term.split(" ").nth(2).expect("").parse().expect("");
+        let filepath = term.split(" ").nth(0).expect("");
+        let count = term.split(" ").nth(1).expect("").parse().expect("");
+        let opt = term.split(" ").nth(2).expect("").parse().expect("");
 
         initester(filepath, count, opt, &mut writer);
     }
-}
-
-fn genetictests() -> (){
-
-    let path1 = vec![1, 2, 3, 4, 5, 6, 7, 8, 9];
-    let path2 = vec![9, 8, 7, 6, 5, 4, 3, 2, 1];
-
-    let (pchild1, pchild2) = pmx(&path1, &path2);
-    let (ochild1, ochild2) = genetic::ox(&path1, &path2);
-    println!("Parent 1: {:?}", path1);
-    println!("Parent 2: {:?}", path2);
-    println!("Child 1:  {:?}", pchild1);
-    println!("Child 2:  {:?}", pchild2);
-    println!("Child 1:  {:?}", ochild1);
-    println!("Child 2:  {:?}", ochild2);
-
-}
-
-fn numfunction_v1(max: usize, rng: &mut ThreadRng) -> usize{
-
-
-    min(min(rng.gen_range(0..max), rng.gen_range(0..max)), min(rng.gen_range(0..max), rng.gen_range(0..max)))
-}
-
-fn numfunction_v2(max:usize, rng:  &mut ThreadRng) -> usize{
-
-    rng.gen_range(0..max) * rng.gen_range(0..max) / max
-}
-
-fn generate_random_weighted(max: usize, rng: &mut ThreadRng) -> usize {
-
-    let a : f64 = rng.gen();
-
-    (a.powf(2.0)*(max as f64)) as usize
 }
 
 fn main() {
 
 
 
-    let iniResult = fs::read_to_string("config.ini");
-    let ini = match iniResult {
+    let ini_result = fs::read_to_string("config.ini");
+    let ini = match ini_result {
         Ok(file) => file,
-        Err(error) =>{
+        Err(_) =>{
             auto_test(6, 1000, 100);
             auto_test(8, 1000, 100);
             auto_test(10, 1000, 100);
@@ -170,7 +133,7 @@ for fpath in &args[1..]{
     let graph = parser::parse_graph_matrix(&*file_content);
 
     /*let now = Instant::now();
-    let (best, path) = bruteforce::brute_force_MT(&graph);
+    let (best, path) = bruteforce::brute_force_mt(&graph);
 
     let time = now.elapsed().as_micros();
     println!("elapsed: {} us", time);

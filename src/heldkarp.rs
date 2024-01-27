@@ -7,19 +7,19 @@ pub fn held_karp(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
 
     let size = graph.len();
     // mask, node -> value
-    let mut vecHash = vec![];
+    let mut vec_hash = vec![];
     let mut map1 = HashMap::new();
 
     for i in 1..size {
         map1.insert((1 << i, i), graph[0][i]);
     }
 
-    vecHash.push(map1);
+    vec_hash.push(map1);
 
-    for it in 1..size-1 {
+    for _ in 1..size-1 {
         //println!("ITERATION: {}", it);
         let mut mapit = HashMap::new();
-        for (k,v) in vecHash.last().expect("") {
+        for (k,v) in vec_hash.last().expect("") {
             for i in 1..size{
                 if k.0 & 1 << i != 0 {
                     continue;
@@ -30,13 +30,13 @@ pub fn held_karp(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
                     }}).or_insert(v + graph[k.1][i]);
             }
         }
-        vecHash.push(mapit);
+        vec_hash.push(mapit);
     }
 
     // node, num -> mask, value tuples
     let mut minval = i32::MAX;
     let mut minprev = 0;
-    for (k, v) in vecHash.last().expect("plswork") {
+    for (k, v) in vec_hash.last().expect("plswork") {
         //println!("MIN: {}, NODE: {}, VAL:{}", minval, k.1 ,v+graph[k.1][0]);
 
         if v+graph[k.1][0] < minval
@@ -53,8 +53,8 @@ pub fn held_karp(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     let mut curmask = 2_usize.pow(size as u32)-1;
 
 
-    for i in (0..vecHash.len()).rev(){
-        for (k, v) in &vecHash[i] {
+    for i in (0..vec_hash.len()).rev(){
+        for (k, v) in &vec_hash[i] {
             //println!("NODE: {}, VAL:{}, MASK: {:#06b}", k.1 ,v+graph[k.1][0], k.0);
 
             //println!("v + graph[k.1][curmin]: {}", v + graph[k.1][curmin]);
@@ -81,55 +81,4 @@ pub fn held_karp(graph: &Vec<Vec<i32>>) -> (i32, Vec<usize>) {
     //path.pop();
 
     (minval, path)
-}
-
-
-
-
-
-
-
-
-pub fn greedy_held_karp(graph: &Vec<Vec<i32>>) -> i32 {
-
-    let size = graph.len();
-    // node, num -> mask, value tuples
-
-    let mut map = HashMap::new();
-
-
-    for i in 1..size {
-        map.insert((i,1), (1<<i,graph[0][i]));
-    }
-
-    for it in 2..size+1 {
-        for i in 1..size{
-            let e = map.get(&(i,1) ).expect("Whoops");
-            let currmask = e.0;
-            let currval = e.1;
-            for j in 1..size{
-                if currmask & 1<<j > 0{
-                    continue;
-                }
-                let tin = (currmask|1<<j , currval+graph[i][j]);
-                map.entry((j,it)).and_modify(|existing_value| {
-                    if tin.1 < existing_value.1 {
-                        *existing_value = tin;
-                    }}).or_insert(tin);
-            }
-        }
-    }
-    // node, num -> mask, value tuples
-    let mut minval = i32::MAX;
-    for (k, v) in &map {
-        if k.1 == size
-        {
-            if v.1 < minval
-            {
-                minval = v.1
-            }
-        }
-    }
-
-    minval
 }

@@ -31,7 +31,7 @@ pub fn insert(path: Vec<usize>, j:usize, k:usize) -> Vec<usize> {
 
 pub fn ox(path1: &Vec<usize>, path2: &Vec<usize>) -> (Vec<usize>, Vec<usize>) {
     let len = path1.len();
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
 
     // Choose two random indices for the crossover
     let start = rng.gen_range(0..len);
@@ -66,7 +66,7 @@ pub fn ox(path1: &Vec<usize>, path2: &Vec<usize>) -> (Vec<usize>, Vec<usize>) {
 
 pub fn pmx(path1: &Vec<usize>, path2: &Vec<usize>) -> (Vec<usize>, Vec<usize>) {
     let len = path1.len();
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
 
     // Choose two random indices for the crossover
     let start = rng.gen_range(0..len);
@@ -123,7 +123,7 @@ fn calculate_cost(graph: &Vec<Vec<i32>>, path: &Vec<usize>) -> i32
     cost
 }
 
-fn mutate(graph: &Vec<Vec<i32>>, path: Vec<usize>, percentage: usize, rng: &mut ThreadRng) -> Vec<usize>{
+fn mutate(path: Vec<usize>, percentage: usize, rng: &mut ThreadRng) -> Vec<usize>{
 
     let length = path.len();
     let mut mutatedpath = path.clone();
@@ -132,18 +132,6 @@ fn mutate(graph: &Vec<Vec<i32>>, path: Vec<usize>, percentage: usize, rng: &mut 
     }
 
     mutatedpath
-}
-
-fn numfunction_v1(max: usize, rng: &mut ThreadRng) -> usize{
-
-
-    min(min(rng.gen_range(0..max), rng.gen_range(0..max)), min(rng.gen_range(0..max), rng.gen_range(0..max)))
-
-}
-
-fn numfunction_v2(max:usize, rng:  &mut ThreadRng) -> usize{
-
-    rng.gen_range(0..max) * rng.gen_range(0..max) / max
 }
 
 fn generate_random_weighted(max: usize, rng: &mut ThreadRng) -> usize {
@@ -163,12 +151,10 @@ fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)
 
     let mut subpopulation = population.clone();
 
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
     let populationlen = population.len();
     subpopulation.truncate(populationlen/3);
     while subpopulation.len() < maxpopulation {
-        let index1 = generate_random_weighted(populationlen, &mut rng);
-        let index2 = generate_random_weighted(populationlen, &mut rng);
 
         let index1 = rng.gen_range(0..populationlen);
         let index2 = rng.gen_range(0..populationlen);
@@ -179,8 +165,8 @@ fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)
             children = pmx(&population[index1].1, &population[index2].1);
         }
 
-        let mut mutatedchildren0 = mutate(graph, children.0, mutation_probability, &mut rng);
-        let mut mutatedchildren1 = mutate(graph, children.1, mutation_probability, &mut rng);
+        let mutatedchildren0 = mutate(children.0, mutation_probability, &mut rng);
+        let mutatedchildren1 = mutate(children.1, mutation_probability, &mut rng);
         subpopulation.push((calculate_cost(graph,&mutatedchildren0), mutatedchildren0));
         subpopulation.push((calculate_cost(graph,&mutatedchildren1), mutatedchildren1));
     }
@@ -192,7 +178,6 @@ fn create_subpopulation(graph: &Vec<Vec<i32>>, population: Vec<(i32, Vec<usize>)
 pub fn genetic(graph: &Vec<Vec<i32>>, maxpopulation: usize) -> (i32, Vec<usize>)
 {
     let mut population = vec![];
-    let now = Instant::now();
     let mut rng = thread_rng();
     let mut iteration = 0;
 
